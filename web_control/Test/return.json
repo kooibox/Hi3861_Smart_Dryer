@@ -1,0 +1,33 @@
+{
+    "devices": [
+        {
+            "app_id": "c62705e8caec40ddb4b6d0bd0cb16fc6",
+            "app_name": "DefaultApp_6909wkjm",
+            "device_id": "69254fd5bf22cc5a8c09cdcf_demo",
+            "node_id": "demo",
+            "gateway_id": "69254fd5bf22cc5a8c09cdcf_demo",
+            "node_type": "GATEWAY",
+            "product_id": "69254fd5bf22cc5a8c09cdcf",
+            "product_name": "智慧洗衣房衣物烘干监测系统",
+            "status": "ONLINE",
+            "tags": []
+        },
+        {
+            "app_id": "c62705e8caec40ddb4b6d0bd0cb16fc6",
+            "app_name": "DefaultApp_6909wkjm",
+            "device_id": "6909a104e41f2979315e886c_202313008833",
+            "node_id": "202313008833",
+            "gateway_id": "6909a104e41f2979315e886c_202313008833",
+            "device_name": "haha",
+            "node_type": "GATEWAY",
+            "product_id": "6909a104e41f2979315e886c",
+            "product_name": "ha",
+            "status": "OFFLINE",
+            "tags": []
+        }
+    ],
+    "page": {
+        "count": 2,
+        "marker": "6909a1eba2480562b7a86fdb"
+    }
+}

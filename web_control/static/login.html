@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 | 智慧洗衣房</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #38bdf8;
+      --muted: #cbd5e1;
+      --text: #e2e8f0;
+      --danger: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0;
+      font-family: "Segoe UI","Helvetica Neue",Arial,sans-serif;
+      background: radial-gradient(circle at 20% 20%, #1f2937 0, #0f172a 45%, #0b1224 100%);
+      color: var(--text);
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 28px;
+      width: min(360px, 92vw);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+    }
+    h1 { margin: 0 0 16px; font-size: 22px; }
+    label { display: block; margin-bottom: 8px; color: var(--muted); }
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+      background: #0b1224;
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #0b1224;
+      font-size: 15px;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(56,189,248,0.25);
+    }
+    .msg { margin-top: 10px; font-size: 13px; color: var(--danger); min-height: 18px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1 style="text-align:center;">登录</h1>
+    <label for="username">用户名</label>
+    <input id="username" type="text" placeholder="请输入用户名" />
+    <label for="pwd">密码</label>
+    <input id="pwd" type="password" placeholder="请输入密码" />
+    <button onclick="login()">登录</button>
+    <div class="msg" id="msg"></div>
+  </div>
+  <script>
+    async function login() {
+      const username = document.getElementById('username').value;
+      const pwd = document.getElementById('pwd').value;
+      const msg = document.getElementById('msg');
+      msg.textContent = '';
+
+      if (!username || !pwd) {
+        msg.textContent = '请输入用户名和密码';
+        return;
+      }
+
+      try {
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: username, password: pwd })
+        });
+        if (!res.ok) {
+          msg.textContent = '用户名或密码错误';
+          return;
+        }
+        window.location.href = '/';
+      } catch (e) {
+        msg.textContent = '请求失败';
+      }
+    }
+    document.getElementById('pwd').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') login();
+    });
+    document.getElementById('username').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') login();
+    });
+  </script>
+</body>
+</html>

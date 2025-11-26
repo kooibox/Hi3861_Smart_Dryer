@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智慧洗衣房烘干控制台</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #38bdf8;
+      --muted: #cbd5e1;
+      --text: #e2e8f0;
+      --danger: #f87171;
+      --success: #34d399;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at 20% 20%, #1f2937 0, #0f172a 45%, #0b1224 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .container {
+      width: min(960px, 92vw);
+      margin: 32px auto;
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 2fr 1fr;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+    }
+    h1 { margin: 0 0 12px; font-size: 22px; }
+    h2 { margin: 0 0 10px; font-size: 18px; color: var(--muted); }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 12px; }
+    .pill {
+      padding: 12px;
+      border-radius: 10px;
+      background: #0b1224;
+      border: 1px solid #1f2738;
+    }
+    .pill strong { display: block; color: var(--muted); font-size: 12px; letter-spacing: 0.5px; }
+    .pill span { font-size: 18px; }
+    .controls { display: grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 10px; margin-top: 12px; }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 14px;
+      color: #0b1224;
+      background: var(--accent);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s;
+      box-shadow: 0 10px 30px rgba(56,189,248,0.25);
+    }
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); opacity: 0.9; }
+    .ghost { background: transparent; color: var(--text); border: 1px solid #1f2937; box-shadow: none; }
+    .danger { background: var(--danger); box-shadow: 0 10px 30px rgba(248,113,113,0.25); }
+    .success { background: var(--success); box-shadow: 0 10px 30px rgba(52,211,153,0.25); }
+    .log { max-height: 260px; overflow: auto; font-size: 13px; line-height: 1.4; background: #0b1224; border-radius: 10px; padding: 12px; border: 1px solid #1f2937; }
+    .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 8px; }
+    .chart-card { grid-column: 1 / -1; background: var(--card); border: 1px solid #1f2937; border-radius: 12px; padding: 16px; box-shadow: 0 14px 40px rgba(0,0,0,0.35); }
+    .chart-wrap { position: relative; width: 100%; height: 240px; }
+    .chart-wrap canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+    @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1 style="text-align:center;">智慧洗衣房烘干控制台</h1>
+      <h2>设备状态</h2>
+      <div class="stats" id="stats">
+        <div class="pill"><strong>运行状态</strong><span id="status">--</span></div>
+        <div class="pill"><strong>档位</strong><span id="mode">--</span></div>
+        <div class="pill"><strong>湿度</strong><span id="humidity">--</span></div>
+        <div class="pill"><strong>温度</strong><span id="temperature">--</span></div>
+        <div class="pill"><strong>剩余时间</strong><span id="countdown">--</span></div>
+        <div class="pill"><strong>更新时间</strong><span id="updated">--</span></div>
+      </div>
+
+      <h2 style="margin-top:16px;">控制</h2>
+      <div class="controls">
+        <button class="success" onclick="sendCmd('start')">启动</button>
+        <button class="danger" onclick="sendCmd('stop')">停止</button>
+        <button class="ghost" onclick="sendCmd('toggle')">切换运行</button>
+      </div>
+      <div class="controls">
+        <button onclick="sendCmd('set_mode', {gear:1})">档位 1 (Fast)</button>
+        <button onclick="sendCmd('set_mode', {gear:2})">档位 2 (Standard)</button>
+        <button onclick="sendCmd('set_mode', {gear:3})">档位 3 (Soft)</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>日志</h2>
+      <div class="log" id="log"></div>
+    </div>
+    <div class="chart-card">
+      <h2 style="margin:0 0 10px;">湿度变化曲线</h2>
+      <div class="chart-wrap">
+        <canvas id="humidityChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const maxPoints = 50;
+    let humidityData = [];
+    let timeLabels = [];
+    const logBox = document.getElementById('log');
+    function log(msg) {
+      const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      const div = document.createElement('div');
+      div.textContent = line;
+      logBox.prepend(div);
+    }
+
+    async function fetchState() {
+      try {
+        const res = await fetch('/api/state');
+        const data = await res.json();
+        const payload = data.payload || {};
+        const svc = (payload.services && payload.services[0]) || {};
+        const p = svc.properties || {};
+        document.getElementById('status').textContent = p.status || '--';
+        document.getElementById('mode').textContent = p.mode || '--';
+        document.getElementById('humidity').textContent = (p.humidity ?? '--') + (p.humidity !== undefined ? '%' : '');
+        document.getElementById('temperature').textContent = (p.temperature ?? '--') + (p.temperature !== undefined ? '℃' : '');
+        document.getElementById('countdown').textContent = p.countdown ?? '--';
+        document.getElementById('updated').textContent = data.ts ? new Date(data.ts * 1000).toLocaleTimeString() : '--';
+        if (typeof p.humidity === 'number') {
+          const ts = data.ts ? new Date(data.ts * 1000).toLocaleTimeString() : new Date().toLocaleTimeString();
+          humidityData.push(p.humidity);
+          timeLabels.push(ts);
+          if (humidityData.length > maxPoints) {
+            humidityData.shift();
+            timeLabels.shift();
+          }
+          updateChart();
+        }
+      } catch (e) {
+        log('获取状态失败: ' + e);
+      }
+    }
+
+    async function sendCmd(command_name, paras = {}) {
+      try {
+        const res = await fetch('/api/command', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command_name, paras })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        log(`命令已发送: ${command_name} ${JSON.stringify(paras)}`);
+      } catch (e) {
+        log('发送失败: ' + e);
+      }
+    }
+
+    setInterval(fetchState, 3000);
+    fetchState();
+    log('前端加载完成');
+
+    // Chart.js 简易折线图
+    const chartCanvas = document.getElementById('humidityChart');
+    const ctx = chartCanvas.getContext('2d');
+    let chart;
+    function updateChart() {
+      if (!chart) {
+        chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: timeLabels,
+            datasets: [{
+              label: '湿度 (%)',
+              data: humidityData,
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56,189,248,0.15)',
+              tension: 0.2,
+              fill: true
+            }]
+          },
+          options: {
+            scales: {
+              y: {
+                beginAtZero: true,
+                suggestedMax: 100,
+                title: { display: true, text: '湿度 (%)', color: '#cbd5e1' }
+              },
+              x: {
+                ticks: { maxTicksLimit: 6 },
+                title: { display: true, text: '时间', color: '#cbd5e1' }
+              }
+            },
+            plugins: { legend: { display: false } },
+            responsive: true,
+            maintainAspectRatio: false
+          }
+        });
+      } else {
+        chart.data.labels = timeLabels;
+        chart.data.datasets[0].data = humidityData;
+        chart.update('none');
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</body>
+</html>
