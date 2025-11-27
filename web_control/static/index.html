@@ -1,131 +1,385 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>智慧洗衣房烘干控制台</title>
+  <title>智慧洗衣房控制台</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #111827;
-      --accent: #38bdf8;
-      --muted: #cbd5e1;
-      --text: #e2e8f0;
-      --danger: #f87171;
-      --success: #34d399;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --secondary: #64748b;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --bg-gradient: radial-gradient(circle at top right, #1e293b, #0f172a);
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.1);
     }
-    * { box-sizing: border-box; }
+
+    [data-theme="light"] {
+      --bg-gradient: radial-gradient(circle at top right, #f8fafc, #e2e8f0);
+      --card-bg: rgba(255, 255, 255, 0.8);
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border: rgba(0, 0, 0, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      margin: 0; padding: 0;
-      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-      background: radial-gradient(circle at 20% 20%, #1f2937 0, #0f172a 45%, #0b1224 100%);
-      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-    }
-    .container {
-      width: min(960px, 92vw);
-      margin: 32px auto;
-      display: grid;
-      gap: 16px;
-      grid-template-columns: 2fr 1fr;
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid #1f2937;
-      border-radius: 12px;
       padding: 20px;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+      position: relative;
     }
-    h1 { margin: 0 0 12px; font-size: 22px; }
-    h2 { margin: 0 0 10px; font-size: 18px; color: var(--muted); }
-    .stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 12px; }
-    .pill {
-      padding: 12px;
-      border-radius: 10px;
-      background: #0b1224;
-      border: 1px solid #1f2738;
+
+    /* Header Theme Toggle */
+    .header-theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .pill strong { display: block; color: var(--muted); font-size: 12px; letter-spacing: 0.5px; }
-    .pill span { font-size: 18px; }
-    .controls { display: grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 10px; margin-top: 12px; }
+
+    .header-theme-toggle .btn-ghost {
+      padding: 8px 16px;
+      font-size: 13px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    @media (min-width: 1024px) {
+      .container {
+        grid-template-columns: 350px 1fr;
+        grid-template-rows: auto auto;
+        align-items: start;
+      }
+
+      /* Left column alignment */
+      .card-status,
+      .card-controls {
+        height: 100%;
+        min-height: 400px;
+      }
+
+      /* Grid Areas or explicit placement */
+      .card-status {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .card-controls {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .card-chart {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      .card-logs {
+        grid-column: 2;
+        grid-row: 2;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      /* margin-bottom removed, handled by grid gap */
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      background: linear-gradient(to right, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Status Grid */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .status-item {
+      background: rgba(15, 23, 42, 0.4);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .status-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .status-value.highlight {
+      color: var(--primary);
+    }
+
+    /* Controls */
+    .btn-group-triangular {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .btn-group-triangular .btn-bottom {
+      grid-column: 1 / -1;
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
     button {
-      cursor: pointer;
+      padding: 12px;
       border: none;
-      border-radius: 10px;
-      padding: 12px 18px;
+      border-radius: 8px;
       font-size: 14px;
-      color: #0b1224;
-      background: var(--accent);
-      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s;
-      box-shadow: 0 10px 30px rgba(56,189,248,0.25);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: white;
+      background: var(--secondary);
     }
-    button:hover { transform: translateY(-1px); }
-    button:active { transform: translateY(0); opacity: 0.9; }
-    .ghost { background: transparent; color: var(--text); border: 1px solid #1f2937; box-shadow: none; }
-    .danger { background: var(--danger); box-shadow: 0 10px 30px rgba(248,113,113,0.25); }
-    .success { background: var(--success); box-shadow: 0 10px 30px rgba(52,211,153,0.25); }
-    .log { max-height: 260px; overflow: auto; font-size: 13px; line-height: 1.4; background: #0b1224; border-radius: 10px; padding: 12px; border: 1px solid #1f2937; }
-    .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 8px; }
-    .chart-card { grid-column: 1 / -1; background: var(--card); border: 1px solid #1f2937; border-radius: 12px; padding: 16px; box-shadow: 0 14px 40px rgba(0,0,0,0.35); }
-    .chart-wrap { position: relative; width: 100%; height: 240px; }
-    .chart-wrap canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
-    @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+
+    button:hover {
+      filter: brightness(110%);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+    }
+
+    .btn-success {
+      background: var(--success);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-main);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Chart */
+    .chart-wrapper {
+      position: relative;
+      height: 300px;
+      width: 100%;
+    }
+
+    /* Logs */
+    .log-box {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      height: 200px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .log-entry {
+      margin-bottom: 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 4px;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-time {
+      color: var(--secondary);
+      margin-right: 8px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
   </style>
 </head>
+
 <body>
+  <!-- Header Theme Toggle -->
+  <div class="header-theme-toggle">
+    <button class="btn-ghost" onclick="toggleTheme()" id="themeToggle">🌙 夜间模式</button>
+  </div>
+
   <div class="container">
-    <div class="card">
-      <h1 style="text-align:center;">智慧洗衣房烘干控制台</h1>
+    <!-- Status Card -->
+    <div class="card card-status">
+      <h1>智慧洗衣房</h1>
+
       <h2>设备状态</h2>
-      <div class="stats" id="stats">
-        <div class="pill"><strong>运行状态</strong><span id="status">--</span></div>
-        <div class="pill"><strong>档位</strong><span id="mode">--</span></div>
-        <div class="pill"><strong>湿度</strong><span id="humidity">--</span></div>
-        <div class="pill"><strong>温度</strong><span id="temperature">--</span></div>
-        <div class="pill"><strong>剩余时间</strong><span id="countdown">--</span></div>
-        <div class="pill"><strong>更新时间</strong><span id="updated">--</span></div>
-      </div>
-
-      <h2 style="margin-top:16px;">控制</h2>
-      <div class="controls">
-        <button class="success" onclick="sendCmd('start')">启动</button>
-        <button class="danger" onclick="sendCmd('stop')">停止</button>
-        <button class="ghost" onclick="sendCmd('toggle')">切换运行</button>
-      </div>
-      <div class="controls">
-        <button onclick="sendCmd('set_mode', {gear:1})">档位 1 (Fast)</button>
-        <button onclick="sendCmd('set_mode', {gear:2})">档位 2 (Standard)</button>
-        <button onclick="sendCmd('set_mode', {gear:3})">档位 3 (Soft)</button>
+      <div class="status-grid">
+        <div class="status-item">
+          <div class="status-label">运行状态</div>
+          <div class="status-value highlight" id="status">--</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">当前模式</div>
+          <div class="status-value" id="mode">--</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">当前湿度</div>
+          <div class="status-value" id="humidity">--</div>
+        </div>
+        <div class="status-item">
+          <div class="status-label">当前温度</div>
+          <div class="status-value" id="temperature">--</div>
+        </div>
+        <div class="status-item" style="grid-column: span 2;">
+          <div class="status-label">剩余时间</div>
+          <div class="status-value" id="countdown">--</div>
+        </div>
+        <div class="status-item" style="grid-column: span 2;">
+          <div class="status-label">最后更新</div>
+          <div class="status-value" style="font-size: 14px;" id="updated">--</div>
+        </div>
       </div>
     </div>
 
-    <div class="card">
-      <h2>日志</h2>
-      <div class="log" id="log"></div>
+    <!-- Controls Card -->
+    <div class="card card-controls">
+      <h2>操作控制</h2>
+      <div class="btn-group-triangular">
+        <button class="btn-success" onclick="sendCmd('start')">启动</button>
+        <button class="btn-danger" onclick="sendCmd('stop')">停止</button>
+        <button class="btn-ghost btn-bottom" onclick="sendCmd('toggle')">切换</button>
+      </div>
+      <div style="margin-top: 16px;">
+        <div class="status-label" style="margin-bottom: 8px;">模式设定</div>
+        <div class="btn-group-triangular">
+          <button class="btn-primary" onclick="sendCmd('set_mode', {gear:1})">快速</button>
+          <button class="btn-primary" onclick="sendCmd('set_mode', {gear:2})">标准</button>
+          <button class="btn-primary btn-bottom" onclick="sendCmd('set_mode', {gear:3})">柔和</button>
+        </div>
+      </div>
     </div>
-    <div class="chart-card">
-      <h2 style="margin:0 0 10px;">湿度变化曲线</h2>
-      <div class="chart-wrap">
+
+    <!-- Chart Card -->
+    <div class="card card-chart">
+      <h2>湿度监控</h2>
+      <div class="chart-wrapper">
         <canvas id="humidityChart"></canvas>
       </div>
     </div>
+
+    <!-- Logs Card -->
+    <div class="card card-logs">
+      <h2>系统日志</h2>
+      <div class="log-box" id="log"></div>
+    </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
+    // Configuration
     const maxPoints = 50;
     let humidityData = [];
     let timeLabels = [];
     const logBox = document.getElementById('log');
+
+    // Logger
     function log(msg) {
-      const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      const time = new Date().toLocaleTimeString();
       const div = document.createElement('div');
-      div.textContent = line;
+      div.className = 'log-entry';
+      div.innerHTML = `<span class="log-time">[${time}]</span> ${msg}`;
       logBox.prepend(div);
     }
 
+    // API Interaction
     async function fetchState() {
       try {
         const res = await fetch('/api/state');
@@ -133,24 +387,32 @@
         const payload = data.payload || {};
         const svc = (payload.services && payload.services[0]) || {};
         const p = svc.properties || {};
-        document.getElementById('status').textContent = p.status || '--';
-        document.getElementById('mode').textContent = p.mode || '--';
-        document.getElementById('humidity').textContent = (p.humidity ?? '--') + (p.humidity !== undefined ? '%' : '');
-        document.getElementById('temperature').textContent = (p.temperature ?? '--') + (p.temperature !== undefined ? '℃' : '');
-        document.getElementById('countdown').textContent = p.countdown ?? '--';
-        document.getElementById('updated').textContent = data.ts ? new Date(data.ts * 1000).toLocaleTimeString() : '--';
+
+        // Update UI
+        updateText('status', p.status);
+        updateText('mode', p.mode);
+        updateText('humidity', p.humidity, '%');
+        updateText('temperature', p.temperature, '℃');
+        updateText('countdown', p.countdown);
+
+        const ts = data.ts ? new Date(data.ts * 1000).toLocaleTimeString() : '--';
+        document.getElementById('updated').textContent = ts;
+
+        // Update Chart
         if (typeof p.humidity === 'number') {
-          const ts = data.ts ? new Date(data.ts * 1000).toLocaleTimeString() : new Date().toLocaleTimeString();
-          humidityData.push(p.humidity);
-          timeLabels.push(ts);
-          if (humidityData.length > maxPoints) {
-            humidityData.shift();
-            timeLabels.shift();
-          }
-          updateChart();
+          const chartTime = data.ts ? new Date(data.ts * 1000).toLocaleTimeString() : new Date().toLocaleTimeString();
+          updateChartData(p.humidity, chartTime);
         }
       } catch (e) {
-        log('获取状态失败: ' + e);
+        // Silent fail or minimal log to avoid spam
+        console.error('Fetch error:', e);
+      }
+    }
+
+    function updateText(id, val, suffix = '') {
+      const el = document.getElementById(id);
+      if (el) {
+        el.textContent = (val !== undefined && val !== null) ? val + suffix : '--';
       }
     }
 
@@ -162,59 +424,123 @@
           body: JSON.stringify({ command_name, paras })
         });
         if (!res.ok) throw new Error(await res.text());
-        log(`命令已发送: ${command_name} ${JSON.stringify(paras)}`);
+        log(`发送命令成功: ${command_name} ${JSON.stringify(paras)}`);
       } catch (e) {
-        log('发送失败: ' + e);
+        log(`发送命令失败: ${e.message}`);
       }
     }
 
+    // Chart Setup
+    const ctx = document.getElementById('humidityChart').getContext('2d');
+    let chart;
+
+    function initChart() {
+      Chart.defaults.color = '#94a3b8';
+      Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: timeLabels,
+          datasets: [{
+            label: '湿度 (%)',
+            data: humidityData,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 0,
+            pointHitRadius: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              backgroundColor: 'rgba(15, 23, 42, 0.9)',
+              titleColor: '#f1f5f9',
+              bodyColor: '#cbd5e1',
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              suggestedMax: 100,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { maxTicksLimit: 8 }
+            }
+          },
+          interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+          }
+        }
+      });
+    }
+
+    function updateChartData(val, time) {
+      humidityData.push(val);
+      timeLabels.push(time);
+
+      if (humidityData.length > maxPoints) {
+        humidityData.shift();
+        timeLabels.shift();
+      }
+
+      if (chart) {
+        chart.update('none'); // 'none' mode for performance
+      }
+    }
+
+    // Theme Toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const button = document.getElementById('themeToggle');
+
+      if (html.getAttribute('data-theme') === 'light') {
+        html.removeAttribute('data-theme');
+        button.innerHTML = '🌙 夜间模式';
+        localStorage.setItem('theme', 'dark');
+        log('切换到夜间模式');
+      } else {
+        html.setAttribute('data-theme', 'light');
+        button.innerHTML = '☀️ 白天模式';
+        localStorage.setItem('theme', 'light');
+        log('切换到白天模式');
+      }
+    }
+
+    // Load saved theme
+    function loadTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      const button = document.getElementById('themeToggle');
+
+      if (savedTheme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        button.innerHTML = '☀️ 白天模式';
+      } else {
+        button.innerHTML = '🌙 夜间模式';
+      }
+    }
+
+    // Initialization
+    initChart();
+    loadTheme();
     setInterval(fetchState, 3000);
     fetchState();
-    log('前端加载完成');
-
-    // Chart.js 简易折线图
-    const chartCanvas = document.getElementById('humidityChart');
-    const ctx = chartCanvas.getContext('2d');
-    let chart;
-    function updateChart() {
-      if (!chart) {
-        chart = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: timeLabels,
-            datasets: [{
-              label: '湿度 (%)',
-              data: humidityData,
-              borderColor: '#38bdf8',
-              backgroundColor: 'rgba(56,189,248,0.15)',
-              tension: 0.2,
-              fill: true
-            }]
-          },
-          options: {
-            scales: {
-              y: {
-                beginAtZero: true,
-                suggestedMax: 100,
-                title: { display: true, text: '湿度 (%)', color: '#cbd5e1' }
-              },
-              x: {
-                ticks: { maxTicksLimit: 6 },
-                title: { display: true, text: '时间', color: '#cbd5e1' }
-              }
-            },
-            plugins: { legend: { display: false } },
-            responsive: true,
-            maintainAspectRatio: false
-          }
-        });
-      } else {
-        chart.data.labels = timeLabels;
-        chart.data.datasets[0].data = humidityData;
-        chart.update('none');
-      }
-    }
+    log('系统已就绪');
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </body>
+
 </html>
